@@ -1,0 +1,31 @@
+Step 2: Create Modules for AWS and GCP
+
+modules/aws_vpc/main.tf:
+
+variable "region" {}
+variable "vpc_count" {}
+
+provider "aws" {
+  region = var.region
+}
+
+resource "aws_vpc" "vpc" {
+  count      = var.vpc_count
+  cidr_block = "10.16.0.0/16"
+
+  tags = {
+    Name = "vpc-${count.index}"
+    Environment = "Production"
+  }
+}
+
+resource "aws_subnet" "subnet" {
+  count = var.vpc_count * 4
+  vpc_id = element(aws_vpc.vpc[*].id, floor(count.index / 4))
+  cidr_block = cidrsubnet(element(aws_vpc.vpc[*].cidr_block, floor(count.index / 4)), 4, count.index % 4)
+
+  tags = {
+    Name = "subnet-${count.index}"
+    Environment = "Production"
+  }
+}
