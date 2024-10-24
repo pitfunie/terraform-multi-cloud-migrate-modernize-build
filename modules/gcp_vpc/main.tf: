@@ -1,0 +1,27 @@
+Create Modules for GCP
+
+modules/gcp_vpc/main.tf:
+
+variable "project" {}
+variable "region" {}
+variable "vpc_count" {}
+
+provider "google" {
+  project = var.project
+  region = var.region
+}
+
+resource "google_compute_network" "vpc" {
+  count = var.vpc_count
+  name  = "vpc-${count.index}"
+
+  auto_create_subnetworks = false
+}
+
+resource "google_compute_subnetwork" "subnet" {
+  count = var.vpc_count * 4
+  name          = "subnet-${count.index}"
+  ip_cidr_range = "10.16.${count.index % 4}.0/24"
+  region        = var.region
+  network       = element(google_compute_network.vpc[*].name, floor(count.index / 4))
+}
